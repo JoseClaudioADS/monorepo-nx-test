@@ -3,7 +3,7 @@ import { usersTable } from '../db/schema';
 
 class UsersRepository {
   async findAll() {
-    const users = await db.select().from(usersTable);
+    const users = await db.selectDistinct().from(usersTable);
     return users;
   }
 }
