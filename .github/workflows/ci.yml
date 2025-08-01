@@ -1,39 +1,57 @@
-name: CI
+name: CI - Build e Deploy de Apps Afetadas
 
+# Dispara o workflow em pushes para a branch 'main'
 on:
   push:
     branches:
       - main
-  pull_request:
-
-permissions:
-  actions: read
-  contents: read
 
 jobs:
-  main:
+  build_and_deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      # 1. Faz o checkout do código
+      # fetch-depth: 0 é CRUCIAL para que o NX possa comparar com a branch base
+      - name: Checkout Repository
+        uses: actions/checkout@v4
         with:
-          filter: tree:0
           fetch-depth: 0
 
-      # This enables task distribution via Nx Cloud
-      # Run this command as early as possible, before dependencies are installed
-      # Learn more at https://nx.dev/ci/reference/nx-cloud-cli#npx-nxcloud-startcirun
-      # Uncomment this line to enable task distribution
-      # - run: npx nx start-ci-run --distribute-on="3 linux-medium-js" --stop-agents-after="build"
-
-      # Cache node_modules
-      - uses: actions/setup-node@v4
+      # 2. Configura o ambiente Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: '20' # Use a versão do Node do seu projeto
+          cache: 'npm' # Ou 'yarn', 'pnpm'
 
-      - run: npm ci --legacy-peer-deps
+      # 3. Instala as dependências do monorepo
+      - name: Install Dependencies
+        run: npm ci
 
-      # Prepend any command with "nx-cloud record --" to record its logs to Nx Cloud
-      # - run: npx nx-cloud record -- echo Hello World
-      # - run: npx nx affected -t lint test build
-      - run: npx nx affected -t build
+      # 4. O passo mágico do NX: determina quais projetos foram afetados
+      # A action oficial 'nx/setup-nx' simplifica tudo, especialmente o cache
+      # e a obtenção da lista de projetos afetados.
+      - name: Setup Nx
+        uses: nx/setup-nx@v5
+        id: nx # Damos um ID a este passo para referenciar seu output depois
+
+      # 5. Executa o build apenas para os projetos afetados
+      - name: Build Affected Projects
+        run: npx nx affected -t build --parallel
+
+      # 6. Faz o deploy da API (APENAS SE ELA FOI AFETADA)
+      - name: Deploy API
+        # A condição 'if' verifica se 'api' está na lista de projetos afetados
+        # que a action 'nx/setup-nx' gerou para nós.
+        if: contains(steps.nx.outputs.affected_projects, 'api')
+        run: |
+          echo "🚀 Deploying API..."
+          # Aqui vai o seu script ou comando de deploy para a API
+          # Ex: ./scripts/deploy-api.sh
+
+      # 7. Faz o deploy da Web (APENAS SE ELA FOI AFETADA)
+      - name: Deploy Web
+        if: contains(steps.nx.outputs.affected_projects, 'web')
+        run: |
+          echo "🚀 Deploying Web App..."
+          # Aqui vai o seu script ou comando de deploy para a aplicação web
