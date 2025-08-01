@@ -1,6 +1,5 @@
-name: CI - Build e Deploy de Apps Afetadas
+name: CI - Build e Deploy de Apps Afetadas (Versão Robusta)
 
-# Dispara o workflow em pushes para a branch 'main'
 on:
   push:
     branches:
@@ -11,47 +10,53 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # 1. Faz o checkout do código
-      # fetch-depth: 0 é CRUCIAL para que o NX possa comparar com a branch base
+      # fetch-depth: 0 continua sendo crucial.
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # 2. Configura o ambiente Node.js
+      # 2. Configura o ambiente Node.js e o cache de dependências
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Use a versão do Node do seu projeto
+          node-version: '20'
           cache: 'npm' # Ou 'yarn', 'pnpm'
 
-      # 3. Instala as dependências do monorepo
+      # 3. Instala as dependências
       - name: Install Dependencies
         run: npm ci
 
-      # 4. O passo mágico do NX: determina quais projetos foram afetados
-      # A action oficial 'nx/setup-nx' simplifica tudo, especialmente o cache
-      # e a obtenção da lista de projetos afetados.
-      - name: Setup Nx
-        uses: nx/setup-nx@v4
-        id: nx # Damos um ID a este passo para referenciar seu output depois
+      # 4. PASSO CHAVE: Determina as aplicações afetadas e exporta a lista
+      - name: Determine Affected Apps
+        id: affected-apps # Damos um ID ao passo para referenciar seu output
+        run: |
+          # 1. Executa o comando do NX para listar APENAS as apps afetadas
+          # 2. 'tr' substitui quebras de linha por vírgulas
+          # 3. 'sed' remove a última vírgula, se houver
+          # 4. 'echo' exporta a string para o output do passo no GitHub Actions
+          AFFECTED_LIST=$(npx nx show projects --affected --type=app | tr '\n' ',' | sed 's/,$//')
+          echo "lista=${AFFECTED_LIST}" >> $GITHUB_OUTPUT
+          echo "Lista de apps afetadas: ${AFFECTED_LIST}"
 
-      # 5. Executa o build apenas para os projetos afetados
+      # 5. Executa o build para TODOS os projetos afetados (incluindo libs)
+      # Isso é importante para garantir que o build da app funcione, pois as libs
+      # afetadas precisam ser construídas primeiro.
       - name: Build Affected Projects
         run: npx nx affected -t build --parallel
 
       # 6. Faz o deploy da API (APENAS SE ELA FOI AFETADA)
       - name: Deploy API
-        # A condição 'if' verifica se 'api' está na lista de projetos afetados
-        # que a action 'nx/setup-nx' gerou para nós.
-        if: contains(steps.nx.outputs.affected_projects, 'api')
+        # A condição 'if' agora verifica a variável 'lista' do passo 'affected-apps'
+        if: contains(steps.affected-apps.outputs.lista, 'api')
         run: |
           echo "🚀 Deploying API..."
-          # Aqui vai o seu script ou comando de deploy para a API
+          # Seu script/comando de deploy aqui
           # Ex: ./scripts/deploy-api.sh
 
       # 7. Faz o deploy da Web (APENAS SE ELA FOI AFETADA)
       - name: Deploy Web
-        if: contains(steps.nx.outputs.affected_projects, 'web')
+        if: contains(steps.affected-apps.outputs.lista, 'web')
         run: |
           echo "🚀 Deploying Web App..."
-          # Aqui vai o seu script ou comando de deploy para a aplicação web
+          # Seu script/comando de deploy aqui
