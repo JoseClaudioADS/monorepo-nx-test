@@ -6,6 +6,7 @@ class UsersRepository {
     const users = await db.selectDistinct().from(usersTable);
     const users2 = await db.selectDistinct().from(usersTable);
     const users3 = await db.selectDistinct().from(usersTable);
+    const users4 = await db.selectDistinct().from(usersTable);
     return users;
   }
 }
