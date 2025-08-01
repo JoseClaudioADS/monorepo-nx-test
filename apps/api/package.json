@@ -67,9 +67,5 @@
         }
       }
     }
-  },
-  "dependencies": {
-    "@org/database": "0.0.1",
-    "@org/features": "0.0.1"
   }
 }

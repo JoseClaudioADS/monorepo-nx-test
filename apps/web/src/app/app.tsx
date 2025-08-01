@@ -54,7 +54,7 @@ function App(): JSX.Element {
 
     // Validação simples
     if (!formData.name || !formData.age || !formData.email) {
-      alert('Por favor, preencha todos os campos.');
+      alert('Por favor, preencha todos os campos. 2');
       return;
     }
 

@@ -1,6 +1,6 @@
 {
   "name": "@org/database",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -17,8 +17,8 @@
   "dependencies": {
     "dotenv": "^17.2.1",
     "drizzle-orm": "^0.44.4",
-    "pg": "^8.16.3",
-    "tslib": "^2.3.0"
+    "tslib": "^2.3.0",
+    "drizzle-kit": "0.31.4"
   },
   "devDependencies": {
     "@types/pg": "^8.15.5",
