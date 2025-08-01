@@ -32,7 +32,7 @@ jobs:
       # A action oficial 'nx/setup-nx' simplifica tudo, especialmente o cache
       # e a obtenção da lista de projetos afetados.
       - name: Setup Nx
-        uses: nx/setup-nx@v5
+        uses: nx/setup-nx@v4
         id: nx # Damos um ID a este passo para referenciar seu output depois
 
       # 5. Executa o build apenas para os projetos afetados
