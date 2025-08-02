@@ -35,7 +35,7 @@ jobs:
           # 2. 'tr' substitui quebras de linha por vírgulas
           # 3. 'sed' remove a última vírgula, se houver
           # 4. 'echo' exporta a string para o output do passo no GitHub Actions
-          AFFECTED_LIST=$(npx nx show projects --affected --type=app | tr '\n' ',' | sed 's/,$//')
+          AFFECTED_LIST=$(npx nx show projects --affected --base=origin/main | tr '\n' ',' | sed 's/,$//')
           echo "lista=${AFFECTED_LIST}" >> $GITHUB_OUTPUT
           echo "Lista de apps afetadas: ${AFFECTED_LIST}"
 
